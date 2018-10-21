@@ -6,12 +6,12 @@ import { applyMiddleware, compose, createStore, combineReducers } from 'redux';
 import { combineEpics } from 'redux-observable';
 import { createEpicMiddleware, ofType  } from 'redux-observable';
 import { Field, reduxForm } from 'redux-form';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Provider } from 'react-redux';
 import { reducer as reduxFormReducer } from 'redux-form';
 import { SubmissionError } from 'redux-form';
 import { Values } from 'redux-form-website-template';
-import { mergeMap } from 'rxjs/operators';
+import { mergeMap, delay, map } from 'rxjs/operators';
 import logo from './logo.svg';
 import './App.css';
 
@@ -38,9 +38,9 @@ const ALLOWED_NAMES = [
     action$ =>
       action$.pipe( 
           ofType(ACTIONS.START_SUBMISSION),
-        mergeMap(action => {
+          mergeMap(action => {
           let { resolve, reject } = action.meta || {}; // :eyes:
-          return Observable.of(1)
+          return of(1)
             .delay(1000) // fake network request
             .map(res => {
               if (ALLOWED_NAMES.indexOf(action.payload.username) === -1) {
@@ -141,7 +141,18 @@ class AppR extends Component {
     return (
         <Provider store={store}>
             <div className="App">
-                sdfsdf
+              <h2>Async valdiation & submission with redux-observable and redux-forms</h2>
+              <p>
+                Usernames that will pass validation:{' '}
+                {ALLOWED_NAMES.map((name, i) =>
+                  <span key={name}>
+                    <code>{name}</code>
+                    {i === ALLOWED_NAMES.length - 1 ? '' : ', '}
+                  </span>
+                )}
+              </p>
+              <ConnectedSubmitValidationForm />
+              <Values form='submitValidation' />
             </div>
       </Provider>
     );
