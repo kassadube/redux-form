@@ -11,7 +11,7 @@ import { Provider } from 'react-redux';
 import { reducer as reduxFormReducer } from 'redux-form';
 import { SubmissionError } from 'redux-form';
 import { Values } from 'redux-form-website-template';
-import { mergeMap, delay, map } from 'rxjs/operators';
+import { mergeMap, delay, map, catchError } from 'rxjs/operators';
 import logo from './logo.svg';
 import './App.css';
 
@@ -38,22 +38,22 @@ const ALLOWED_NAMES = [
     action$ =>
       action$.pipe( 
           ofType(ACTIONS.START_SUBMISSION),
-          mergeMap(action => {
+          mergeMap(action => {           
           let { resolve, reject } = action.meta || {}; // :eyes:
-          return of(1)
-            .delay(1000) // fake network request
-            .map(res => {
+           return of(1).pipe(
+            delay(1000), // fake network request
+            map(res => {
               if (ALLOWED_NAMES.indexOf(action.payload.username) === -1) {
                 // pretend that the server did this verification
                 throw new Error('bad username');
               }
               if (resolve) resolve(res); // :eyes: -- resume redux-form `onSubmit` function
               return { type: ACTIONS.COMPLETE_SUBMISSION };
-            })
-            .catch(error => {
+            }),
+            catchError(error => {
               if (reject) reject(error); // :eyes:
-              return Observable.of({ type: ACTIONS.COMPLETE_SUBMISSION, error });
-            });
+              return of({ type: ACTIONS.COMPLETE_SUBMISSION, error });
+            }))
         }))
   );
 
